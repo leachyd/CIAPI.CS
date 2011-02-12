@@ -32,33 +32,22 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Hammock">
-      <HintPath>..\packages\Hammock.1.1.7\lib\4.0\Hammock.dll</HintPath>
+      <HintPath>..\packages\TweetSharp-v1\dotNET 4.0\NET Framework 4.0\Hammock.dll</HintPath>
     </Reference>
-    <Reference Include="Hammock.ClientProfile">
-      <HintPath>..\packages\TweetSharp.0.0.10\lib\4.0\Hammock.ClientProfile.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=4.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\TweetSharp.0.0.10\lib\4.0\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="Remotion.Data.Linq">
-      <HintPath>..\packages\TweetSharp.0.0.10\lib\4.0\Remotion.Data.Linq.dll</HintPath>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\TweetSharp-v1\dotNET 4.0\NET Framework 4.0\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="TweetSharp">
-      <HintPath>..\packages\TweetSharp.0.0.10\lib\4.0\TweetSharp.dll</HintPath>
+      <HintPath>..\packages\TweetSharp-v1\dotNET 4.0\NET Framework 4.0\TweetSharp.dll</HintPath>
     </Reference>
-    <Reference Include="TweetSharp.Fluent">
-      <HintPath>..\packages\TweetSharp.0.0.10\lib\4.0\TweetSharp.Fluent.dll</HintPath>
-    </Reference>
-    <Reference Include="TweetSharp.Linq">
-      <HintPath>..\packages\TweetSharp.0.0.10\lib\4.0\TweetSharp.Linq.dll</HintPath>
+    <Reference Include="TweetSharp.Twitter">
+      <HintPath>..\packages\TweetSharp-v1\dotNET 4.0\NET Framework 4.0\TweetSharp.Twitter.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
