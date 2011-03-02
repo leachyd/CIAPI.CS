@@ -23,8 +23,8 @@ namespace SOAPI.CS2
         /// <param name="url"></param>
         public StackExchangeClient(string apiKey, string url)
             : base(
-                new Uri(url), new RequestCache(), new RequestFactory(),
-                new Dictionary<string, IThrottedRequestQueue> { { "", Throttle.Instance } }, 3)
+                new Uri(url), new RequestFactory(),
+                new Dictionary<string, ICachingRequestQueue> { { "", Throttle.Instance } }, 3)
         {
             ApiKey = apiKey;
         }
@@ -38,9 +38,9 @@ namespace SOAPI.CS2
         /// <param name="requestFactory"></param>
         /// <param name="throttleScopes"></param>
         /// <param name="retryCount"></param>
-        public StackExchangeClient(string apiKey, Uri uri, IRequestCache cache, IRequestFactory requestFactory,
-                               Dictionary<string, IThrottedRequestQueue> throttleScopes, int retryCount)
-            : base(uri, cache, requestFactory, throttleScopes, retryCount)
+        public StackExchangeClient(string apiKey, Uri uri, IRequestFactory requestFactory,
+                               Dictionary<string, ICachingRequestQueue> throttleScopes, int retryCount)
+            : base(uri, requestFactory, throttleScopes, retryCount)
         {
             ApiKey = apiKey;
         }

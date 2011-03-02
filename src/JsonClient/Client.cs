@@ -24,10 +24,10 @@ namespace CityIndex.JsonClient
         #region Fields
 
         private static readonly ILog Log = LogManager.GetLogger(typeof(Client));
-        private readonly IRequestCache _cache;
+        
         private readonly IRequestFactory _requestFactory;
         private readonly int _retryCount;
-        private readonly Dictionary<string, IThrottedRequestQueue> _throttleScopes;
+        private readonly Dictionary<string, ICachingRequestQueue> _throttleScopes;
         private readonly Uri _uri;
         private readonly object _lockObj = new object();
 
@@ -40,8 +40,8 @@ namespace CityIndex.JsonClient
         ///<param name="requestFactory"></param>
         ///<param name="throttleScopes"></param>
         ///<param name="retryCount"></param>
-        public Client(Uri uri, IRequestCache cache, IRequestFactory requestFactory,
-                         Dictionary<string, IThrottedRequestQueue> throttleScopes, int retryCount)
+        public Client(Uri uri, IRequestFactory requestFactory,
+                         Dictionary<string, ICachingRequestQueue> throttleScopes, int retryCount)
         {
 #if SILVERLIGHT
     // this enables the client framework stack - necessary for access to headers
@@ -52,7 +52,7 @@ namespace CityIndex.JsonClient
             _retryCount = retryCount;
             _requestFactory = requestFactory;
             _throttleScopes = throttleScopes;
-            _cache = cache;
+            
             string url = uri.AbsoluteUri;
             if (!url.EndsWith("/"))
             {
@@ -65,7 +65,7 @@ namespace CityIndex.JsonClient
         ///</summary>
         ///<param name="uri"></param>
         public Client(Uri uri)
-            : this(uri, new RequestCache(), new RequestFactory(), new Dictionary<string, IThrottedRequestQueue> { { "default", new ThrottedRequestQueue() } }, 2)
+            : this(uri, new RequestFactory(), new Dictionary<string, ICachingRequestQueue> { { "default", new RequestQueue() } }, 2)
         {
 
         }
@@ -76,7 +76,7 @@ namespace CityIndex.JsonClient
         /// <param name="uri"></param>
         /// <param name="requestFactory"></param>
         public Client(Uri uri, IRequestFactory requestFactory)
-            : this(uri, new RequestCache(), requestFactory, new Dictionary<string, IThrottedRequestQueue> { { "default", new ThrottedRequestQueue() } }, 2)
+            : this(uri, requestFactory, new Dictionary<string, ICachingRequestQueue> { { "default", new RequestQueue() } }, 2)
         {
 
         }
@@ -241,7 +241,7 @@ namespace CityIndex.JsonClient
                                        string method, Dictionary<string, object> parameters, TimeSpan cacheDuration,
                                        string throttleScope) where TDTO : class, new()
         {
-            lock (_cache)
+            lock (_throttleScopes)
             {
                 BeforeBuildUrl(target, uriTemplate, method, parameters, cacheDuration, throttleScope);
 
@@ -252,7 +252,8 @@ namespace CityIndex.JsonClient
                     url = ApplyUriTemplateParameters(parameters, url);
                 }
 
-                CacheItem<TDTO> item = _cache.GetOrCreate<TDTO>(url);
+                var throttle = _throttleScopes[throttleScope];
+                CacheItem<TDTO> item = throttle.GetOrCreate<TDTO>(url);
 
                 switch (item.ItemState)
                 {
@@ -260,7 +261,7 @@ namespace CityIndex.JsonClient
 
                         if (!_throttleScopes.ContainsKey(throttleScope))
                         {
-                            _cache.Remove<TDTO>(url);
+                            throttle.Remove<TDTO>(url);
                             throw new Exception(string.Format("Throttle for scope '{0}' not found.\r\n{1}", throttleScope, item));
                         }
 
@@ -281,7 +282,7 @@ namespace CityIndex.JsonClient
                         request.ContentType = "application/json";
 #endif
                         item.ItemState = CacheItemState.Pending;
-                        CreateRequest<TDTO>(url);
+                        CreateRequest<TDTO>(url,throttleScope);
                         break;
                     case CacheItemState.Pending:
                         item.AddCallback(cb, state);
@@ -351,17 +352,18 @@ namespace CityIndex.JsonClient
         /// Builds a JSOB from parameters and asynchronously feeds the request stream with the resultant JSON before sending the request
         /// </summary>
         /// <param name="url"></param>
-        private void SetPostEntityAndEnqueueRequest<TDTO>(string url)
+        private void SetPostEntityAndEnqueueRequest<TDTO>(string url,string throttleScope)
             where TDTO : class, new()
         {
-            CacheItem<TDTO> item = _cache.Get<TDTO>(url);
+            var throttle = _throttleScopes[throttleScope];
+            CacheItem<TDTO> item = throttle.Get<TDTO>(url);
 
 
             byte[] bodyValue = CreatePostEntity(item.Parameters);
 
             item.Request.BeginGetRequestStream(ac =>
                 {
-                    lock (_cache)
+                    lock (_throttleScopes)
                     {
                         try
                         {
@@ -370,7 +372,7 @@ namespace CityIndex.JsonClient
                                 requestStream.Write(bodyValue, 0, bodyValue.Length);
                             }
 
-                            EnqueueRequest<TDTO>(url);
+                            EnqueueRequest<TDTO>(url,throttleScope);
                         }
                         catch (Exception ex)
                         {
@@ -382,7 +384,7 @@ namespace CityIndex.JsonClient
                             }
                             finally
                             {
-                                _cache.Remove<TDTO>(item.Url);
+                                throttle.Remove<TDTO>(item.Url);
                             }
 
                         }
@@ -419,10 +421,11 @@ namespace CityIndex.JsonClient
 
 
 
-        private void CreateRequest<TDTO>(string url)
+        private void CreateRequest<TDTO>(string url,string throttleScope)
             where TDTO : class, new()
         {
-            CacheItem<TDTO> item = _cache.Get<TDTO>(url);
+            var throttle = _throttleScopes[throttleScope];
+            CacheItem<TDTO> item = throttle.Get<TDTO>(url);
 
 
             item.Request = _requestFactory.Create(url);
@@ -432,11 +435,11 @@ namespace CityIndex.JsonClient
 
             if (item.Method.ToUpper() == "POST")
             {
-                SetPostEntityAndEnqueueRequest<TDTO>(url);
+                SetPostEntityAndEnqueueRequest<TDTO>(url,throttleScope);
             }
             else
             {
-                EnqueueRequest<TDTO>(url);
+                EnqueueRequest<TDTO>(url,throttleScope);
             }
         }
 
@@ -444,18 +447,19 @@ namespace CityIndex.JsonClient
         /// 
         /// </summary>
         /// <typeparam name="TDTO"></typeparam>
-        private void EnqueueRequest<TDTO>(string url)
+        private void EnqueueRequest<TDTO>(string url,string throttleScope)
             where TDTO : class, new()
         {
-            CacheItem<TDTO> outerItem = _cache.Get<TDTO>(url);
-            IThrottedRequestQueue throttle = _throttleScopes[outerItem.ThrottleScope];
+            var throttle = _throttleScopes[throttleScope];
+            CacheItem<TDTO> outerItem = throttle.Get<TDTO>(url);
+            
 
             WebRequest request = outerItem.Request;
 
             throttle.Enqueue(url, request, (ar, requestHolder) =>
                 {
 
-                    lock (_cache)
+                    lock (_throttleScopes)
                     {
                         RequestHolder holder = requestHolder;
 
@@ -463,7 +467,7 @@ namespace CityIndex.JsonClient
                         // and this throws then we have a deadlock as the callbacks are int
                         // the cache item that does not exist so no where to send the exception.
                         // TODO: add an OnException event to this class
-                        CacheItem<TDTO> item = _cache.Get<TDTO>(url);
+                        CacheItem<TDTO> item = throttle.Get<TDTO>(url);
                         WebResponse response = null;
                         try
                         {
@@ -484,7 +488,7 @@ namespace CityIndex.JsonClient
                                 catch (Exception ex)
                                 {
                                     // TODO: test this
-                                    _cache.Remove<TDTO>(item.Url);
+                                    throttle.Remove<TDTO>(item.Url);
                                     throw new ResponseHandlerException("Unhandled exception in caller's response handler", ex);
                                 }
                             }
@@ -506,7 +510,7 @@ namespace CityIndex.JsonClient
                                     response.Close();
                                 }
 
-                                CreateRequest<TDTO>(url);
+                                CreateRequest<TDTO>(url,throttleScope);
                             }
                             else
                             {
@@ -532,7 +536,7 @@ namespace CityIndex.JsonClient
                                 }
                                 finally
                                 {
-                                    _cache.Remove<TDTO>(item.Url);
+                                    throttle.Remove<TDTO>(item.Url);
                                 }
                             }
                         }
@@ -545,7 +549,7 @@ namespace CityIndex.JsonClient
                             }
                             finally
                             {
-                                _cache.Remove<TDTO>(item.Url);
+                                throttle.Remove<TDTO>(item.Url);
                             }
                         }
                     }
@@ -614,14 +618,10 @@ namespace CityIndex.JsonClient
             {
                 if (disposing)
                 {
-                    // dispose managed resources here
-                    if (_cache != null)
-                    {
-                        _cache.Dispose();    
-                    }
+                    
                     if(_throttleScopes!=null)
                     {
-                        foreach (KeyValuePair<string, IThrottedRequestQueue> throttleScope in _throttleScopes)
+                        foreach (KeyValuePair<string, ICachingRequestQueue> throttleScope in _throttleScopes)
                         {
                             if (throttleScope.Value != null)
                             {

@@ -13,17 +13,17 @@ namespace CIAPI.Rpc
     {
         // TODO: create throttle scope structure and build configuration
         public Client(Uri uri)
-            : base(uri, new RequestCache(), new RequestFactory(), new Dictionary<string, IThrottedRequestQueue>
+            : base(uri, new RequestFactory(), new Dictionary<string, ICachingRequestQueue>
                 {
-                    { "data", new ThrottedRequestQueue(TimeSpan.FromSeconds(5),30,10) }, 
-                    { "trading", new ThrottedRequestQueue(TimeSpan.FromSeconds(3),1,10) }
+                    { "data", new RequestQueue (TimeSpan.FromMilliseconds(0), TimeSpan.FromSeconds(5),30,10) }, 
+                    { "trading", new RequestQueue (TimeSpan.FromMilliseconds(0),TimeSpan.FromSeconds(3),1,10) }
                 }, 3)
         {
         }
 
-        
-        public Client(Uri uri, IRequestCache cache, IRequestFactory requestFactory, Dictionary<string, IThrottedRequestQueue> throttleScopes, int retryCount)
-            : base(uri,cache, requestFactory, throttleScopes, retryCount)
+
+        public Client(Uri uri, IRequestFactory requestFactory, Dictionary<string, ICachingRequestQueue> throttleScopes, int retryCount)
+            : base(uri,requestFactory, throttleScopes, retryCount)
         {
         }
 

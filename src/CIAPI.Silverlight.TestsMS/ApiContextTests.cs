@@ -33,13 +33,13 @@ namespace CIAPI.Silverlight.TestsMS
         {
             var requestFactory = new TestRequestFactory();
 
-            var throttleScopes = new Dictionary<string, IThrottedRequestQueue>
+            var throttleScopes = new Dictionary<string, ICachingRequestQueue>
                 {
-                    {"data", new ThrottedRequestQueue(TimeSpan.FromSeconds(5), 30, 10)},
-                    {"trading", new ThrottedRequestQueue(TimeSpan.FromSeconds(3), 1, 10)}
+                    { "data", new RequestQueue (TimeSpan.FromMilliseconds(0), TimeSpan.FromSeconds(5),30,10) }, 
+                    { "trading", new RequestQueue (TimeSpan.FromMilliseconds(0),TimeSpan.FromSeconds(3),1,10) }
                 };
 
-            var ctx = new CIAPI.Rpc.Client(new Uri(TestConfig.ApiUrl), new RequestCache(), requestFactory, throttleScopes, 3);
+            var ctx = new CIAPI.Rpc.Client(new Uri(TestConfig.ApiUrl),  requestFactory, throttleScopes, 3);
 
             requestFactory.CreateTestRequest(LoggedIn);
 
@@ -66,15 +66,15 @@ namespace CIAPI.Silverlight.TestsMS
 
             var requestFactory = new TestRequestFactory();
 
-            var throttleScopes = new Dictionary<string, IThrottedRequestQueue>
+            var throttleScopes = new Dictionary<string, ICachingRequestQueue>
                 {
-                    {"data", new ThrottedRequestQueue(TimeSpan.FromSeconds(5), 30, 10)},
-                    {"trading", new ThrottedRequestQueue(TimeSpan.FromSeconds(3), 1, 10)}
+                    { "data", new RequestQueue (TimeSpan.FromMilliseconds(0), TimeSpan.FromSeconds(5),30,10) }, 
+                    { "trading", new RequestQueue (TimeSpan.FromMilliseconds(0),TimeSpan.FromSeconds(3),1,10) }
                 };
 
             requestFactory.CreateTestRequest(LoggedOut);
 
-            var ctx = new CIAPI.Rpc.Client(new Uri(TestConfig.ApiUrl), new RequestCache(), requestFactory, throttleScopes, 3);
+            var ctx = new CIAPI.Rpc.Client(new Uri(TestConfig.ApiUrl),  requestFactory, throttleScopes, 3);
 
             ctx.BeginDeleteSession(TestConfig.ApiUsername, TestConfig.ApiTestSessionId, ar =>
             {
@@ -97,15 +97,15 @@ namespace CIAPI.Silverlight.TestsMS
 
             var requestFactory = new TestRequestFactory();
 
-            var throttleScopes = new Dictionary<string, IThrottedRequestQueue>
+            var throttleScopes = new Dictionary<string, ICachingRequestQueue>
                 {
-                    {"data", new ThrottedRequestQueue(TimeSpan.FromSeconds(5), 30, 10)},
-                    {"trading", new ThrottedRequestQueue(TimeSpan.FromSeconds(3), 1, 10)}
+                    { "data", new RequestQueue (TimeSpan.FromMilliseconds(0), TimeSpan.FromSeconds(5),30,10) }, 
+                    { "trading", new RequestQueue (TimeSpan.FromMilliseconds(0),TimeSpan.FromSeconds(3),1,10) }
                 };
 
             requestFactory.CreateTestRequest(NewsHeadlines14);
 
-            var ctx = new CIAPI.Rpc.Client(new Uri(TestConfig.ApiUrl), new RequestCache(), requestFactory, throttleScopes, 3)
+            var ctx = new CIAPI.Rpc.Client(new Uri(TestConfig.ApiUrl),   requestFactory, throttleScopes, 3)
             {
                 UserName = TestConfig.ApiUsername,
                 SessionId = TestConfig.ApiTestSessionId

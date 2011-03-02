@@ -16,7 +16,7 @@ namespace CityIndex.JsonClient.Tests
         [Test]
         public void ItemCanBeCached()
         {
-            var c = new RequestCache(TimeSpan.FromMilliseconds(10), TimeSpan.MinValue);
+            var c = new RequestQueue(TimeSpan.FromMilliseconds(0), TimeSpan.FromMilliseconds(10), 10, 30);
             lock (c)
             {
                 var item = c.GetOrCreate<FooDTO>("foo");
@@ -27,13 +27,13 @@ namespace CityIndex.JsonClient.Tests
                 var actual = c.Get<FooDTO>("foo");
                 Assert.IsNotNull(actual);
             }
-            
+
         }
 
         [Test, ExpectedException(ExpectedMessage = "item for foo was not found in the cache")]
         public void ItemCanExpireAndBePurged()
         {
-            var c = new RequestCache(TimeSpan.FromMilliseconds(10), TimeSpan.MinValue);
+            var c = new RequestQueue(TimeSpan.FromMilliseconds(0), TimeSpan.FromMilliseconds(10), 10, 30);
             lock (c)
             {
                 var item = c.GetOrCreate<FooDTO>("foo");

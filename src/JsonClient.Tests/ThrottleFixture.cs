@@ -18,7 +18,7 @@ namespace CityIndex.JsonClient.Tests
         public void CanThrottle1Per3Seconds()
         {
             var f = new TestRequestFactory();
-            var t = new ThrottedRequestQueue(TimeSpan.FromSeconds(3), 1, 10);
+            var t = new RequestQueue(TimeSpan.FromMilliseconds(0), TimeSpan.FromSeconds(3), 1, 10);
 
             var sw = new Stopwatch();
             sw.Start();
@@ -58,7 +58,7 @@ namespace CityIndex.JsonClient.Tests
         public void CanThrottle30Per5Seconds()
         {
             var f = new TestRequestFactory();
-            var t = new ThrottedRequestQueue(TimeSpan.FromSeconds(5), 30, 10);
+            var t = new RequestQueue(TimeSpan.FromMilliseconds(0), TimeSpan.FromSeconds(5), 10, 30);
 
             var sw = new Stopwatch();
             sw.Start();
