@@ -3,6 +3,16 @@ using System.Collections.Generic;
 
 namespace CityIndex.JsonClient
 {
+    public interface IServiceExceptionFactory
+    {
+        bool IsException(string json);
+        Type GetExceptionType(string json);
+        Exception BuildException(string json);
+    }
+
+
+
+
     ///<summary>
     /// Describes a general purpose HTTP JSON API client
     ///</summary>

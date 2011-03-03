@@ -18,6 +18,29 @@ namespace CityIndex.JsonClient
             ProcessingWaitHandle = new AutoResetEvent(false);
         }
 
+
+
+        /// <summary>
+        /// The handler
+        /// </summary>
+        public Action<IAsyncResult, CacheItemBase> AsyncResultHandler { get; set; }
+
+        public TimeSpan RequestTimeout
+        {
+            get
+            {
+#if !SILVERLIGHT
+                return TimeSpan.FromMilliseconds(this.Request.Timeout);
+#else
+                //FIXME: Need a way to set this when creating the request Silverlight (see related fix me in RequestFactory.Create
+
+                return TimeSpan.FromMilliseconds(30*1000);
+#endif
+            }
+        }
+
+        public int RequestIndex { get; set; }
+
         ///<summary>
         /// The url of this request
         ///</summary>

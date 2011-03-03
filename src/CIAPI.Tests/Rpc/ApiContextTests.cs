@@ -25,7 +25,8 @@ namespace CIAPI.Tests.Rpc
         private const string LoggedIn = "{\"Session\":\"D2FF3E4D-01EA-4741-86F0-437C919B5559\"}";
         private const string LoggedOut = "{\"LoggedOut\":true}";
         private const string AuthError = "{ \"ErrorMessage\": \"sample value\", \"ErrorCode\": 403 }";
-
+        // Here is a comment 
+        //Here I am typing some more
         [Test]
         public void CanLogin()
         {
